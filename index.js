@@ -2,12 +2,14 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
-// 🔴 THAY ĐƯỜNG LINK WEB GAME TX CỦA BẠN VÀO DÒNG DƯỚI ĐÂY:
-const TARGET_URL = 'https://example-web-tx.com'; 
+// 🔴 ĐỔI ĐÚNG LINK WEB GAME CỦA BẠN VÀO ĐÂY (Có đầy đủ https://)
+const TARGET_URL = 'https://r1w6b.88ipfh.com/home/?inviteCode=4843053#/'; 
 
 app.use('/', createProxyMiddleware({
     target: TARGET_URL,
     changeOrigin: true,
+    secure: false,
+    ws: true, // Hỗ trợ WebSocket nếu game dùng kết nối thời gian thực
     selfHandleResponse: true,
     onProxyRes: async function (proxyRes, req, res) {
         let body = [];
@@ -57,7 +59,6 @@ app.use('/', createProxyMiddleware({
             </style>
 
             <div id="robotWidget" class="robot-card">
-                <!-- Header Robot -->
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(0,255,204,0.25); padding-bottom:5px; cursor:move;">
                     <div style="font-size:11px; color:#00ffcc; font-weight:bold; letter-spacing:0.5px;">
                         🤖 AI SOI CẦU SYSTEM
@@ -65,14 +66,12 @@ app.use('/', createProxyMiddleware({
                     <div id="timerBox" style="font-size:14px; color:#ff0055; font-weight:bold;">--</div>
                 </div>
 
-                <!-- Khung hiển thị TÀI / XỈU -->
                 <div class="tx-box">
                     <div id="btnTai" class="tx-item">TÀI</div>
                     <div style="font-size:11px; color:#aaa; text-align:center;" id="statusText">Đang soi cầu...</div>
                     <div id="btnXiu" class="tx-item">XỈU</div>
                 </div>
 
-                <!-- Lịch sử cầu hàng ngang -->
                 <div style="border-top:1px dashed rgba(255,255,255,0.15); padding-top:5px;">
                     <div style="font-size:9px; color:#aaa; margin-bottom:3px;">LỊCH SỬ (● TÀI | ○ XỈU):</div>
                     <div id="historyRow" style="display:flex; justify-content:flex-start; align-items:center; overflow-x:auto; padding:2px 0;"></div>
@@ -134,7 +133,7 @@ app.use('/', createProxyMiddleware({
                     const c1 = h[len - 1], c2 = h[len - 2], c3 = h[len - 3], c4 = h[len - 4], c5 = len >= 5 ? h[len - 5] : null;
 
                     if (c1 === c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    if (c1 !== c2 && c2 !== c3 && c3 !== c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
+                    if (c1 !== c2 && c2 !== c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     if (c1 === c2 && c2 !== c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     if (c5 && c1 !== c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     
@@ -209,12 +208,19 @@ app.use('/', createProxyMiddleware({
             </script>
             `;
 
-            body = body.replace('</body>', robotOverlayCode + '</body>');
-            
-            // Ép Render trả về đúng định dạng Web HTML để không bị tải file
+            if (body.includes('</body>')) {
+                body = body.replace('</body>', robotOverlayCode + '</body>');
+            } else {
+                body = body + robotOverlayCode;
+            }
+
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
             res.end(body);
         });
+    },
+    onError: function (err, req, res) {
+        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Không thể kết nối đến web game gốc. Vui lòng kiểm tra lại đường link TARGET_URL.');
     }
 }));
 

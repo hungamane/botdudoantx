@@ -2,17 +2,17 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
-// 🔴 ĐỔI ĐÚNG LINK WEB GAME CỦA BẠN VÀO ĐÂY (Phải có https://)
+// 🔴 THAY ĐÚNG LINK WEB GAME CỦA BẠN VÀO DÒNG DƯỚI NÀY (Bắt buộc phải có https://)
 const TARGET_URL = 'https://r1w6b.88ipfh.com/home/?inviteCode=4843053#/'; 
 
-app.use('/', createProxyMiddleware({
+// Xử lý tất cả các tuyến đường (tránh lỗi 404)
+app.use('*', createProxyMiddleware({
     target: TARGET_URL,
     changeOrigin: true,
-    secure: false, // Bỏ qua kiểm tra chứng chỉ SSL
+    secure: false,
     ws: true,
     selfHandleResponse: true,
     onProxyReq: function (proxyReq, req, res) {
-        // Giả lập trình duyệt Chrome thật để tránh bị server game chặn proxy
         proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         proxyReq.setHeader('Referer', TARGET_URL);
     },

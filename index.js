@@ -3,7 +3,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
 // 🔴 THAY ĐƯỜNG LINK WEB GAME TX CỦA BẠN VÀO DÒNG DƯỚI ĐÂY:
-const TARGET_URL = 'https://r1w6b.88ipfh.com/home/?inviteCode=4843053#/?tabName=Home'; 
+const TARGET_URL = 'https://example-web-tx.com'; 
 
 app.use('/', createProxyMiddleware({
     target: TARGET_URL,
@@ -80,7 +80,6 @@ app.use('/', createProxyMiddleware({
             </div>
 
             <script>
-                // 1. KÉO THẢ DI CHUYỂN
                 const widget = document.getElementById('robotWidget');
                 let isDragging = false, currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
 
@@ -100,12 +99,10 @@ app.use('/', createProxyMiddleware({
                     }
                 }, { passive: false });
 
-                // 2. DỮ LIỆU CẦU & THUẬT TOÁN SOI CẦU
                 let historyData = ['TÀI', 'XỈU', 'TÀI', 'TÀI', 'XỈU', 'XỈU', 'TÀI']; 
                 let predictedSide = '';
                 let hasPredictedThisSession = false;
 
-                // HÀM ĐỌC THỜI GIAN GIÂY TRỰC TIẾP TỪ BÀN GAME THẬT
                 function getRealTimeFromGame() {
                     const allElements = document.querySelectorAll('span, div, p, font, b');
                     for (let el of allElements) {
@@ -116,7 +113,7 @@ app.use('/', createProxyMiddleware({
                             }
                         }
                     }
-                    return null; // Không tìm thấy bàn chơi
+                    return null;
                 }
 
                 function renderHistory() {
@@ -136,13 +133,9 @@ app.use('/', createProxyMiddleware({
                     const h = historyData;
                     const c1 = h[len - 1], c2 = h[len - 2], c3 = h[len - 3], c4 = h[len - 4], c5 = len >= 5 ? h[len - 5] : null;
 
-                    // Bẻ cầu bệt dài (> 4 tay)
                     if (c1 === c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    // Cầu 1-1
                     if (c1 !== c2 && c2 !== c3 && c3 !== c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    // Cầu 2-2
                     if (c1 === c2 && c2 !== c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    // Cầu thần tài / gãy bệt
                     if (c5 && c1 !== c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     
                     return c1;
@@ -158,11 +151,9 @@ app.use('/', createProxyMiddleware({
                     document.getElementById('statusText').style.color = '#aaa';
                 }
 
-                // 3. XỬ LÝ LÔGIC THEO DÕI BÀN GAME THẬT (QUÉT 0.3S/LẦN)
                 setInterval(() => {
                     const realTime = getRealTimeFromGame();
 
-                    // TRƯỜNG HỢP 1: KHÔNG THẤY BÀN CHƠI
                     if (realTime === null) {
                         resetDisplayStatus();
                         document.getElementById('timerBox').innerText = '--';
@@ -172,15 +163,12 @@ app.use('/', createProxyMiddleware({
                         return;
                     }
 
-                    // TRƯỜNG HỢP 2: ĐANG TRONG BÀN CHƠI - HIỂN THỊ SỐ GIÂY BÀN THẬT
                     document.getElementById('timerBox').innerText = realTime + 's';
 
-                    // Từ giây thứ 40 đến trước giây thứ 20 (>= 21s): Trạng thái "Đang soi cầu..."
                     if (realTime > 20) {
                         resetDisplayStatus();
                         hasPredictedThisSession = false;
                     } 
-                    // Đúng từ giây thứ 20 đến giây 1: Đưa ra KẾT QUẢ DỰ ĐOÁN
                     else if (realTime <= 20 && realTime > 0) {
                         if (!hasPredictedThisSession) {
                             predictedSide = advancedSoiCau();
@@ -202,7 +190,6 @@ app.use('/', createProxyMiddleware({
                             btnTai.className = 'tx-item';
                         }
                     }
-                    // Đồng hồ đếm ngược về 0: Chốt KẾT QUẢ & Phóng to bên thắng
                     else if (realTime === 0) {
                         if (hasPredictedThisSession) {
                             const winBtn = predictedSide === 'TÀI' ? document.getElementById('btnTai') : document.getElementById('btnXiu');
@@ -223,12 +210,14 @@ app.use('/', createProxyMiddleware({
             `;
 
             body = body.replace('</body>', robotOverlayCode + '</body>');
+            
+            // Ép Render trả về đúng định dạng Web HTML để không bị tải file
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
             res.end(body);
         });
     }
 }));
 
-// Cấu hình cổng chạy Server trên Render
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

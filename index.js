@@ -2,8 +2,7 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
-// 🔴 THAY ĐƯỜNG LINK WEB GAME TX CỦA BẠN VÀO DÒNG DƯỚI ĐÂY:
-const TARGET_URL = 'https://r1w6b.88ipfh.com/home/?inviteCode=4843053#/'; 
+const TARGET_URL = 'https://r1w6b.88ipfh.com/home/?inviteCode=4843053#/'; // Thay web game của bạn vào đây
 
 app.use('/', createProxyMiddleware({
     target: TARGET_URL,
@@ -57,7 +56,6 @@ app.use('/', createProxyMiddleware({
             </style>
 
             <div id="robotWidget" class="robot-card">
-                <!-- Header Robot -->
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(0,255,204,0.25); padding-bottom:5px; cursor:move;">
                     <div style="font-size:11px; color:#00ffcc; font-weight:bold; letter-spacing:0.5px;">
                         🤖 AI SOI CẦU SYSTEM
@@ -65,14 +63,12 @@ app.use('/', createProxyMiddleware({
                     <div id="timerBox" style="font-size:14px; color:#ff0055; font-weight:bold;">--</div>
                 </div>
 
-                <!-- Khung hiển thị TÀI / XỈU -->
                 <div class="tx-box">
                     <div id="btnTai" class="tx-item">TÀI</div>
                     <div style="font-size:11px; color:#aaa; text-align:center;" id="statusText">Đang soi cầu...</div>
                     <div id="btnXiu" class="tx-item">XỈU</div>
                 </div>
 
-                <!-- Lịch sử cầu hàng ngang -->
                 <div style="border-top:1px dashed rgba(255,255,255,0.15); padding-top:5px;">
                     <div style="font-size:9px; color:#aaa; margin-bottom:3px;">LỊCH SỬ (● TÀI | ○ XỈU):</div>
                     <div id="historyRow" style="display:flex; justify-content:flex-start; align-items:center; overflow-x:auto; padding:2px 0;"></div>
@@ -80,7 +76,6 @@ app.use('/', createProxyMiddleware({
             </div>
 
             <script>
-                // 1. KÉO THẢ DI CHUYỂN
                 const widget = document.getElementById('robotWidget');
                 let isDragging = false, currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
 
@@ -100,12 +95,10 @@ app.use('/', createProxyMiddleware({
                     }
                 }, { passive: false });
 
-                // 2. DỮ LIỆU CẦU & THUẬT TOÁN SOI CẦU
                 let historyData = ['TÀI', 'XỈU', 'TÀI', 'TÀI', 'XỈU', 'XỈU', 'TÀI']; 
                 let predictedSide = '';
                 let hasPredictedThisSession = false;
 
-                // HÀM ĐỌC THỜI GIAN GIÂY TRỰC TIẾP TỪ BÀN GAME THẬT
                 function getRealTimeFromGame() {
                     const allElements = document.querySelectorAll('span, div, p, font, b');
                     for (let el of allElements) {
@@ -116,7 +109,7 @@ app.use('/', createProxyMiddleware({
                             }
                         }
                     }
-                    return null; // Không tìm thấy bàn chơi
+                    return null;
                 }
 
                 function renderHistory() {
@@ -136,13 +129,9 @@ app.use('/', createProxyMiddleware({
                     const h = historyData;
                     const c1 = h[len - 1], c2 = h[len - 2], c3 = h[len - 3], c4 = h[len - 4], c5 = len >= 5 ? h[len - 5] : null;
 
-                    // Bẻ cầu bệt dài (> 4 tay)
                     if (c1 === c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    // Cầu 1-1
                     if (c1 !== c2 && c2 !== c3 && c3 !== c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    // Cầu 2-2
                     if (c1 === c2 && c2 !== c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    // Cầu thần tài / gãy bệt
                     if (c5 && c1 !== c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     
                     return c1;
@@ -158,11 +147,9 @@ app.use('/', createProxyMiddleware({
                     document.getElementById('statusText').style.color = '#aaa';
                 }
 
-                // 3. XỬ LÝ LÔGIC THEO DÕI BÀN GAME THẬT (QUÉT 0.3S/LẦN)
                 setInterval(() => {
                     const realTime = getRealTimeFromGame();
 
-                    // TRƯỜNG HỢP 1: KHÔNG THẤY BÀN CHƠI
                     if (realTime === null) {
                         resetDisplayStatus();
                         document.getElementById('timerBox').innerText = '--';
@@ -172,15 +159,12 @@ app.use('/', createProxyMiddleware({
                         return;
                     }
 
-                    // TRƯỜNG HỢP 2: ĐANG TRONG BÀN CHƠI - HIỂN THỊ SỐ GIÂY BÀN THẬT
                     document.getElementById('timerBox').innerText = realTime + 's';
 
-                    // Từ giây thứ 40 đến trước giây thứ 20 (>= 21s): Trạng thái "Đang soi cầu..."
                     if (realTime > 20) {
                         resetDisplayStatus();
                         hasPredictedThisSession = false;
                     } 
-                    // Đúng từ giây thứ 20 đến giây 1: Đưa ra KẾT QUẢ DỰ ĐOÁN
                     else if (realTime <= 20 && realTime > 0) {
                         if (!hasPredictedThisSession) {
                             predictedSide = advancedSoiCau();
@@ -202,7 +186,6 @@ app.use('/', createProxyMiddleware({
                             btnTai.className = 'tx-item';
                         }
                     }
-                    // Đồng hồ đếm ngược 3, 2, 1 về 0: Chốt KẾT QUẢ & Phóng to bên thắng
                     else if (realTime === 0) {
                         if (hasPredictedThisSession) {
                             const winBtn = predictedSide === 'TÀI' ? document.getElementById('btnTai') : document.getElementById('btnXiu');
@@ -211,7 +194,7 @@ app.use('/', createProxyMiddleware({
 
                             historyData.push(predictedSide);
                             renderHistory();
-                            hasPredictedThisSession = false; // Reset chuẩn bị phiên mới
+                            hasPredictedThisSession = false;
 
                             setTimeout(resetDisplayStatus, 3000);
                         }
@@ -228,4 +211,5 @@ app.use('/', createProxyMiddleware({
     }
 }));
 
+// Xuất ứng dụng để Vercel Serverless Engine chạy
 module.exports = app;

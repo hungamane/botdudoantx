@@ -2,15 +2,20 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
-// 🔴 ĐỔI ĐÚNG LINK WEB GAME CỦA BẠN VÀO ĐÂY (Có đầy đủ https://)
+// 🔴 ĐỔI ĐÚNG LINK WEB GAME CỦA BẠN VÀO ĐÂY (Phải có https://)
 const TARGET_URL = 'https://r1w6b.88ipfh.com/home/?inviteCode=4843053#/'; 
 
 app.use('/', createProxyMiddleware({
     target: TARGET_URL,
     changeOrigin: true,
-    secure: false,
-    ws: true, // Hỗ trợ WebSocket nếu game dùng kết nối thời gian thực
+    secure: false, // Bỏ qua kiểm tra chứng chỉ SSL
+    ws: true,
     selfHandleResponse: true,
+    onProxyReq: function (proxyReq, req, res) {
+        // Giả lập trình duyệt Chrome thật để tránh bị server game chặn proxy
+        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        proxyReq.setHeader('Referer', TARGET_URL);
+    },
     onProxyRes: async function (proxyRes, req, res) {
         let body = [];
         proxyRes.on('data', chunk => body.push(chunk));
@@ -133,7 +138,7 @@ app.use('/', createProxyMiddleware({
                     const c1 = h[len - 1], c2 = h[len - 2], c3 = h[len - 3], c4 = h[len - 4], c5 = len >= 5 ? h[len - 5] : null;
 
                     if (c1 === c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
-                    if (c1 !== c2 && c2 !== c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
+                    if (c1 !== c2 && c2 !== c3 && c3 !== c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     if (c1 === c2 && c2 !== c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     if (c5 && c1 !== c2 && c2 === c3 && c3 === c4) return c1 === 'TÀI' ? 'XỈU' : 'TÀI';
                     
@@ -220,7 +225,7 @@ app.use('/', createProxyMiddleware({
     },
     onError: function (err, req, res) {
         res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Không thể kết nối đến web game gốc. Vui lòng kiểm tra lại đường link TARGET_URL.');
+        res.end('Không thể kết nối đến web game gốc. Hãy kiểm tra lại link TARGET_URL.');
     }
 }));
 
